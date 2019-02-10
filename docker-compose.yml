@@ -1,0 +1,31 @@
+version: '2.0'
+
+volumes:
+  sharedvol:
+
+services:
+  firecracker:
+    container_name: firecracker
+    build: ./
+    devices:
+      - /dev/kvm
+    volumes:
+      - sharedvol:/tmp/sharedvol
+      - ./images:/tmp/images
+    entrypoint:
+      - /root/firecracker
+      - --api-sock
+      - /tmp/sharedvol/control.sock
+  apiproxy:
+    container_name: apiproxy
+    build: ./
+    ports:
+      - "12345:12345"
+    depends_on:
+      - firecracker
+    entrypoint:
+      - socat
+      - TCP-LISTEN:12345,,reuseaddr,fork
+      - UNIX-CONNECT:/tmp/sharedvol/control.sock
+    volumes:
+      - sharedvol:/tmp/sharedvol
