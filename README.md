@@ -2,18 +2,19 @@
 
 ## prepare the environement
 
-first, getting KVM device access :
+first, getting KVM device access:
 ```
 sudo setfacl -m u:${USER}:rw /dev/kvm
 ```
 
-second, building and executing the firecracker container and its proxy companion:
+second, building and executing the firecracker container and its proxy companion (a basic socat for the time being):
 ```
+mkdir images # volume to be bound to the firecracker container
 docker-compose build
 docker-compose up -d
 ```
 
-cleaning up things (including the shared volume with the control socket): 
+in case we need to clean up things later (including the shared volume with the control socket): 
 ```
 docker-compose down -v
 ```
@@ -21,14 +22,15 @@ docker-compose down -v
 
 ## following the tutorial
 
-downloading the test kernel and rootfs of the original (tutorial)[https://github.com/firecracker-microvm/firecracker/blob/master/docs/getting-started.md]:
+downloading the test kernel and rootfs of the original quick start guide(https://github.com/firecracker-microvm/firecracker/blob/master/docs/getting-started.md):
 ```
+cd images
 curl -fsSL -o hello-vmlinux.bin https://s3.amazonaws.com/spec.ccfc.min/img/hello/kernel/hello-vmlinux.bin
 curl -fsSL -o hello-rootfs.ext4 https://s3.amazonaws.com/spec.ccfc.min/img/hello/fsfiles/hello-rootfs.ext4
 ```
 
 
-configure the kernel: 
+configure the kernel through API: 
 ```
 curl -X PUT 'http://localhost:12345/boot-source' -H 'Accept: application/json'  -H 'Content-Type: application/json'  \
     -d '{
@@ -37,7 +39,7 @@ curl -X PUT 'http://localhost:12345/boot-source' -H 'Accept: application/json'  
     }'
 ```
 
-configure the root filesystem:
+configure the root filesystem through API:
 ```
 curl -X PUT 'http://localhost:12345/drives/rootfs' \
     -H 'Accept: application/json'           \
@@ -50,7 +52,7 @@ curl -X PUT 'http://localhost:12345/drives/rootfs' \
     }'
 ```
 
-start the guest machine:
+start the guest machine through API:
 ```
 curl -X PUT 'http://localhost:12345/actions' \
     -H  'Accept: application/json' \
